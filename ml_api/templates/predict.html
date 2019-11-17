@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+    <link
+      rel="stylesheet"
+      href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css"
+      crossorigin="anonymous"
+    />
+    <link
+      href="https://cdn.jsdelivr.net/gh/gitbrent/bootstrap4-toggle@3.6.1/css/bootstrap4-toggle.min.css"
+      rel="stylesheet"
+    />
+
+    <link rel="stylesheet" href="static/index.css" />
+    <title>Upload</title>
+  </head>
+
+  <body>
+    <div class="container">
+      <div class="row my-2">
+        <div class="col-9 mx-auto">
+          <h1>Use network</h1>
+        </div>
+      </div>
+      <div class="row my-2">
+        <div class="col-9 mx-auto">
+          <select class="form-control w-25 d-inline" id="net_names"> </select>
+          <button class="btn btn-primary" onclick="load_model();">
+            Load
+          </button>
+        </div>
+      </div>
+      <div class="row my-2">
+        <div class="col-9 mx-auto">
+          <h1>Click predict</h1>
+        </div>
+      </div>
+      <div class="row justify-content-center">
+        <div class="col-5">
+          <button class="btn btn-primary" onclick="predict();">
+            Take Snapshot
+          </button>
+          <input
+            id="live-trigger"
+            type="checkbox"
+            data-toggle="toggle"
+            data-on="Live"
+            data-off="Not Live"
+            data-onstyle="success"
+            data-offstyle="danger"
+          />
+          <br />
+          <span id="classname" class="mx-2 text-capitalize "></span>
+        </div>
+        <div class="col-4" id="my_camera"></div>
+      </div>
+    </div>
+  </body>
+
+  <script src="https://code.jquery.com/jquery-3.4.1.js"></script>
+  <script src="https://cdn.jsdelivr.net/gh/gitbrent/bootstrap4-toggle@3.6.1/js/bootstrap4-toggle.min.js"></script>
+  <script type="text/javascript" src="static/webcam.min.js"></script>
+
+  <script>
+    Webcam.set({
+      width: 320,
+      height: 240,
+      crop_width: 240,
+      crop_height: 240,
+      image_format: "jpeg",
+      jpeg_quality: 90
+    });
+
+    Webcam.attach("#my_camera");
+
+    function predict() {
+      Webcam.snap(function(data_uri) {
+        $.ajax({
+          type: "POST",
+          url: "/predict",
+          dataType: "json",
+          contentType: "application/json",
+          async: false,
+          data: JSON.stringify({
+            image: data_uri
+          })
+        }).done(e => {
+          $("#classname").text(e["name"]);
+        });
+      });
+    }
+
+    function update_models(e) {
+      $.get("/get-models", data => {
+        $("#net_names").html("");
+        data.forEach(text => {
+          var elem = $("<option />");
+          elem.text(text);
+          //  elem.on("click", () => load_model(text));
+          $("#net_names").append(elem);
+        });
+      });
+    }
+
+    function load_model(e) {
+      $.get("/load-model", { name: $("#net_names").val() });
+    }
+
+    update_models();
+
+    var interval;
+    $("#live-trigger").change(() => {
+      if ($("#live-trigger").prop("checked"))
+        interval = setInterval(predict, 500);
+      else clearInterval(interval);
+    });
+  </script>
+</html>

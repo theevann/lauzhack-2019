@@ -1,0 +1,7 @@
+__pycache__
+lauzhack-env/
+node_modules/
+.vscode
+
+*/models/*
+*/train/*

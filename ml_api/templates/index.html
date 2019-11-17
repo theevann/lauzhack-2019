@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+    <link
+      rel="stylesheet"
+      href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css"
+      crossorigin="anonymous"
+    />
+    <link rel="stylesheet" href="static/index.css" />
+    <title>Upload</title>
+  </head>
+
+  <body>
+    <div class="container">
+      <div class="row my-2">
+        <div class="col-9 mx-auto">
+          <h1>Train network</h1>
+        </div>
+      </div>
+      <div class="row my-2">
+        <div class="col-9 mx-auto">
+          <select class="form-control w-25 d-inline" id="net_types">
+            <option value="sqnet">Squeeze Net</option>
+            <option value="mbnet">Mobile Net V2</option>
+            <option value="resnet18">Resnet18</option>
+          </select>
+          <input
+            id="net_name"
+            class="w-25 form-control d-inline"
+            type="text"
+            placeholder="Network name"
+          />
+          <input
+            id="num_epochs"
+            class="w-25 form-control d-inline"
+            type="number"
+            placeholder="Number of epochs"
+            min="1"
+            value="5"
+          />
+          <button class="btn btn-danger" onclick="train();">
+            Train
+          </button>
+        </div>
+      </div>
+      <div class="row my-2">
+        <div class="col-9 mx-auto">
+          <h1>Define training class</h1>
+        </div>
+      </div>
+      <div class="row my-2">
+        <div id="all_classes" class="col-9 mx-auto"></div>
+      </div>
+      <div class="row justify-content-center">
+        <div class="col-5">
+          <input
+            id="classname"
+            class="w-50 form-control d-inline"
+            type="text"
+            placeholder="Class Name"
+          />
+          <button class="btn btn-primary" onclick="snapshot();">
+            Take Snapshot
+          </button>
+          <button class="btn btn-primary" onclick="add();">
+            Add
+          </button>
+          <div class="" id="results"></div>
+        </div>
+        <div class="col-4" id="my_camera"></div>
+      </div>
+    </div>
+  </body>
+
+  <script src="https://code.jquery.com/jquery-3.4.1.js"></script>
+
+  <script type="text/javascript" src="static/webcam.min.js"></script>
+
+  <script>
+    var images = [];
+
+    Webcam.set({
+      width: 320,
+      height: 240,
+      crop_width: 240,
+      crop_height: 240,
+      image_format: "jpeg",
+      jpeg_quality: 90
+    });
+
+    Webcam.attach("#my_camera");
+
+    function test() {
+      Webcam.snap(function(data_uri) {
+        submit(data_uri);
+      });
+    }
+
+    function snapshot() {
+      Webcam.snap(function(data_uri) {
+        var img = $("<img>");
+        img.attr("src", data_uri);
+        img.attr("height", "70px");
+        img.on("click", function() {
+          img.remove();
+        });
+        img.appendTo("#results");
+        images.push(img);
+      });
+    }
+
+    function add() {
+      $.ajax({
+        type: "POST",
+        url: "/add-class",
+        dataType: "json",
+        contentType: "application/json",
+        async: false,
+        data: JSON.stringify({
+          class: $("#classname").val(),
+          data: images.map(el => el[0].src)
+        })
+      }).fail(update_classes);
+    }
+
+    function update_classes(e) {
+      $.get("/get-classes", data => {
+        $("#all_classes").html("");
+        data.forEach(text => {
+          var elem = $("<button />");
+          elem.text(text);
+          elem.on("click", () => rm_class(text));
+          elem.addClass("btn mx-2");
+          $("#all_classes").append(elem);
+        });
+      });
+    }
+
+    function rm_class(name) {
+      $.ajax({
+        url: "/rm-class",
+        type: "get",
+        data: { name: name },
+        success: update_classes
+      });
+    }
+
+    function train() {
+      $.ajax({
+        url: "/train",
+        type: "get",
+        data: {
+          type: $("#net_types").val(),
+          name: $("#net_name").val(),
+          epochs: $("#num_epochs").val()
+        }
+      });
+    }
+
+    function submit(data) {
+      $.ajax({
+        url: "/dish",
+        type: "post",
+        data: { data: data },
+        success: function(e) {
+          console.log(e);
+        }
+      });
+    }
+
+    update_classes();
+  </script>
+</html>

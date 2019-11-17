@@ -1,0 +1,10 @@
+{
+  "dish_1": {
+    "name": "Dish_1",
+    "price": 42
+  },
+  "empty": {
+    "name": "empty",
+    "price": null
+  }
+}

@@ -1,0 +1,30 @@
+#myOnlineCamera video {
+  width: 320px;
+  height: 240px;
+  margin: 15px;
+}
+
+#myOnlineCamera video {
+  width: 320px;
+  height: 240px;
+  margin: 15px;
+}
+
+#myOnlineCamera canvas {
+  width: 320px;
+  height: 240px;
+  margin: 15px;
+}
+
+#myOnlineCamera button {
+  clear: both;
+  margin: 30px;
+}
+
+#results img {
+  margin: 0.2rem;
+}
+
+#results {
+  padding-top: 0.3rem;
+}
